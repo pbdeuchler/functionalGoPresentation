@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Thomomys talpoides</title>
+
+		<meta name="description" content="Confessions of a Go apologist">
+		<meta name="author" content="Philip Deuchler">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/serif.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h2>⚡️ Functional Go ⚡️</h2>
+					<h4>Rage Against The State Machine</h4>
+					<br />
+					<p>
+						<img src="img/github.png" style="margin: 0px; border: none; box-shadow: none; width: 60px;"> <a href="http://github.com/pbdeuchler" style="vertical-align: 20px;">pbdeuchler</a>
+					</p>
+					<p>
+						<img src="img/twitter.png" style="margin: 0px; border: none; box-shadow: none; width: 60px;"> <a href="http://twitter.com/false1001" style="vertical-align: 15px;">@false1001</a>
+					</p>
+
+				</section>
+
+				<section>
+					<h3>What is <span style="font-style:italic;">functional programming</span>?</h3>
+					<h5>(lol)</h5>
+					<aside class="notes">
+						- The answer invariably starts with "Well I think..."
+						- It's not what
+					</aside>
+				</section>
+				<section>
+					<h2>"Decomposing the problem"</h2>
+					<span class="fragment">
+						<h4>Deterministic and discrete functions</h4>
+						<h4>With no side effects</h4>
+					</span>
+					<span class="fragment">
+						<h5>Referential Transparency</h5>
+					</span>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						```go
+						func JudgeHolden(n int) int {
+							strMultiplier := os.Getenv("MULTIPLIER")
+							intMultiplier, _ := strconv.Atoi(strMultiplier)
+							return n * intMultiplier
+						}
+
+						func Glanton(n, m int) {
+							stringResult, _ := strconv.Itoa(n * m)
+							_ = os.Setenv("result", stringResult)
+						}
+
+						func TheKid(n, m int) int {
+							return n * m
+						}
+						```
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## smdh
+
+						```python
+						class Glanton(object):
+						    def __init__(self, initial_state):
+						        self.state = initial_state
+
+						    def increment(self):
+						        self.state = self.state + 1
+
+						>>> test = Glanton(0)
+						>>> test.increment()
+						>>> test.state
+						1
+						>>> test.increment()
+						>>> test.state
+						2
+						>>> test.increment()
+						>>> test.state
+						3
+						```
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						```python
+						def increment_state(state_num):
+							return state_num + 1
+
+						>>> increment_state(
+						...     increment_state(
+						...             increment_state(0)))
+						3
+						>>> increment_state(0)
+						1
+						```
+					</script>
+				</section>
+
+				<section>
+					<h2>Start With a Question</h2>
+					<span class="fragment">
+						<h3 style="font-style: italic;">How functional is Go?</h3>
+						<blockquote>
+							“Your heart's desire is to be told some mystery. The mystery is that there is no mystery.”
+						</blockquote>
+					</span>
+				</section>
+
+				<section>
+					<span class="fragment">
+						<h3>Kinda functional</h3>
+						<h5>¯\_(ツ)_/¯</h5>
+						<h5>People see what they want to see</h5>
+					</span>
+				</section>
+
+				<section>
+					<h3>How is Go <span style="font-style:italic;">not</span> functional?</h3>
+					<ul>
+							<li>No immutability</li>
+							<li>No lazy evaluation</li>
+							<li>It's very much an imperative language at it's core</li>
+					</ul>
+					<aside class="notes">
+						Imperative- giving steps
+						declarative- describing functions
+					</aside>
+				</section>
+
+				<section>
+					<h3>So how is Go functional?</h3>
+					<span class="fragment">
+						<h4>First class functions (oh yeah)</h4>
+						<h4>Function literals (anonymous functions)</h4>
+						<h4>... are closures too!</h4>
+					</span>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						```go
+						type ApplicationLayer func(ip int) http.Handler
+
+						func IPMiddleware(al ApplicationLayer) http.Handler {
+						        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						                ip, port, _ := net.SplitHostPort(deepCopy(r).RemoteAddr)
+						                al(ip).ServeHTTP(w, r)
+						        })
+						}
+						```
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						```go
+						type IteratorFSM func(s IteratorState) IteratorState
+
+						func BuildIterator(lambda IteratorFSM, 
+								initial_state IteratorState) func() IteratorState {
+								state := initial_state
+						        return func() IteratorState {
+						                state = lambda(state)
+						                return state
+						        }
+						}
+						```
+					</script>
+				</section>
+
+
+				<section data-markdown>
+					<script type="text/template">
+						## Small consolation prize
+						```go
+						func (ms *MyStruct) YumaFerry(n int) int {
+							return ms.multiplier * n
+						}
+
+						// is just syntactic sugar for
+
+						func YumaFerry(ms *MyStruct, n int) int {
+							return ms.multiplier * n
+						}
+						```
+					</script>
+				</section>
+
+				<section>
+					<blockquote>
+						“War was always here. Before man was, war waited for him. The ultimate trade awaiting its ultimate practitioner.” 
+					</blockquote>
+					<aside class="notes">
+						i.e. war is complexity, and it will exist either in your logic and implementations or in the tools you use. it's all about tradeoffs
+					</aside>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Further Investigation
+						
+						1. [Functional Programming in 5 Minutes](http://slides.com/gsklee/functional-programming-in-5-minutes#)
+						2. [The Y Combinator (no not that one)](https://medium.com/@ayanonagon/the-y-combinator-no-not-that-one-7268d8d9c46#.a8kjkn4oh)
+						3. [Codewalk: First-Class Functions in Go](https://golang.org/doc/codewalk/functions/)
+						4. [Lexical Scanning in Go](https://www.youtube.com/watch?v=HxaD_trXwRE)
+						5. [Wikipedia](http://en.wikipedia.org/wiki/Functional_programming)
+					</script>
+				</section>
+
+				<section>
+					<span style="font-size: 4em; font-style: italic;">Fin</span>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
